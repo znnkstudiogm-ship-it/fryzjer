@@ -144,12 +144,14 @@ export const handler = async function (event, context) {
     const smsplanetKey = process.env.SMSPLANET_API_KEY;
     const smsplanetPassword = process.env.SMSPLANET_PASSWORD;
     const smsplanetPhone = process.env.SMSPLANET_PHONE;
+    const smsplanetFrom = process.env.SMSPLANET_FROM;
 
-    if (smsplanetKey && smsplanetPassword && smsplanetPhone) {
+    if (smsplanetKey && smsplanetPassword && smsplanetPhone && smsplanetFrom) {
       try {
         const smsParams = new URLSearchParams();
         smsParams.append('key', smsplanetKey);
         smsParams.append('password', smsplanetPassword);
+        smsParams.append('from', smsplanetFrom);
         smsParams.append('to', smsplanetPhone);
         smsParams.append('msg', `Nowa rezerwacja: ${name}, ${service}, ${date} ${time}, tel: ${phone}`);
 
@@ -161,22 +163,26 @@ export const handler = async function (event, context) {
           body: smsParams
         });
 
-        if (smsResponse.ok) {
-          const smsData = await smsResponse.json().catch(() => ({}));
-          // In SMSPlanet, a successful response contains an ID or status OK
-          if (smsData && (smsData.id || smsData.status === 'OK' || smsData.success || !smsData.error)) {
-            smsSuccess = true;
-          } else {
-            smsErrorMsg = `SMSPlanet error code: ${JSON.stringify(smsData)}`;
-          }
+        const rawSmsText = await smsResponse.text();
+        let smsData = {};
+        try {
+          smsData = JSON.parse(rawSmsText);
+        } catch (parseErr) {
+          smsData = { raw: rawSmsText };
+        }
+
+        // SMSPlanet zwraca {"messageId":"..."} przy sukcesie
+        // lub {"errorMsg":"...","errorCode":123} przy błędzie
+        if (smsResponse.ok && smsData.messageId) {
+          smsSuccess = true;
         } else {
-          smsErrorMsg = `SMSPlanet status: ${smsResponse.status} ${await smsResponse.text()}`;
+          smsErrorMsg = `SMSPlanet: ${smsData.errorMsg || rawSmsText} (kod: ${smsData.errorCode ?? smsResponse.status})`;
         }
       } catch (err) {
         smsErrorMsg = `Błąd wysyłki SMS: ${err.message}`;
       }
     } else {
-      smsErrorMsg = 'Brak konfiguracji zmiennych SMSPLANET_API_KEY, SMSPLANET_PASSWORD lub SMSPLANET_PHONE';
+      smsErrorMsg = 'Brak konfiguracji zmiennych SMSPLANET_API_KEY, SMSPLANET_PASSWORD, SMSPLANET_PHONE lub SMSPLANET_FROM';
     }
 
     // Success check: client sees success if AT LEAST ONE notification was sent
