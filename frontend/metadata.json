@@ -1,0 +1,6 @@
+{
+  "name": "Beauty Style Roksana Kotyrba",
+  "description": "Nowoczesny i elegancki salon fryzjerski w Rybniku prowadzony przez Roksanę Kotyrbę. Profesjonalna koloryzacja, strzyżenie i pielęgnacja włosów.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
