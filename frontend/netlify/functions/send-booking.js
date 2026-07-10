@@ -1,7 +1,7 @@
 // Netlify Serverless Function: send-booking
 // Handles form submissions, sends email via Resend, and SMS via SMSPlanet.
 
-exports.handler = async function (event, context) {
+export const handler = async function (event, context) {
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
     return {
