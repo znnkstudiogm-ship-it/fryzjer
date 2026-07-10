@@ -171,12 +171,16 @@ export const handler = async function (event, context) {
           smsData = { raw: rawSmsText };
         }
 
+        console.log('SMSPlanet response status:', smsResponse.status);
+        console.log('SMSPlanet response body:', rawSmsText);
+
         // SMSPlanet zwraca {"messageId":"..."} przy sukcesie
         // lub {"errorMsg":"...","errorCode":123} przy błędzie
         if (smsResponse.ok && smsData.messageId) {
           smsSuccess = true;
         } else {
           smsErrorMsg = `SMSPlanet: ${smsData.errorMsg || rawSmsText} (kod: ${smsData.errorCode ?? smsResponse.status})`;
+          console.error(smsErrorMsg);
         }
       } catch (err) {
         smsErrorMsg = `Błąd wysyłki SMS: ${err.message}`;
@@ -197,6 +201,7 @@ export const handler = async function (event, context) {
           success: true,
           emailSuccess,
           smsSuccess,
+          smsErrorMsg: smsSuccess ? null : smsErrorMsg,
           message: 'Zapytanie o rezerwację zostało pomyślnie wysłane.'
         })
       };
